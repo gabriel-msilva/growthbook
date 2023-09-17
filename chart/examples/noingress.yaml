@@ -1,0 +1,16 @@
+service:
+  type: NodePort
+
+growthbookSettings:
+  appOrigin: http://192.168.49.2:31982
+  apiHost: http://192.168.49.2:31259
+  nodeEnv: production
+  encryptionKey: kasdjflaksdjf;asdkfjlsakdfjsa;dlfj
+
+
+mongodb:
+  enabled: true
+  auth:
+    enabled: false
+  service:
+    type: NodePort

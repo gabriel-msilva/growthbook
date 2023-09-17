@@ -8,6 +8,7 @@ dist
 out
 .DS_Store
 npm-debug.log*
+.yarn
 yarn-debug.log*
 yarn-error.log*
 uploads

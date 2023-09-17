@@ -1,0 +1,183 @@
+# Default values for growthbook.
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+
+replicaCount: 1
+
+image:
+  repository: growthbook/growthbook
+  pullPolicy: IfNotPresent
+  # Overrides the image tag whose default is the chart appVersion.
+  tag: ""
+
+imagePullSecrets: []
+
+nameOverride: ""
+fullnameOverride: ""
+
+serviceAccount:
+  # Specifies whether a service account should be created
+  create: true
+  # Annotations to add to the service account
+  annotations: {}
+  # The name of the service account to use.
+  # If not set and create is true, a name is generated using the fullname template
+  name: ""
+
+podAnnotations: {}
+
+podSecurityContext: {}
+  # fsGroup: 2000
+
+securityContext: {}
+    # capabilities:
+    #   drop:
+    #   - ALL
+    # readOnlyRootFilesystem: true
+    # runAsNonRoot: true
+    # runAsUser: 1000
+
+growthbookSettings:
+  appOrigin: http://localhost:3000
+  apiHost: http://localhost:3100
+
+  # Set to "production" to turn on additional optimizations and API request logging
+  nodeEnv: ""
+
+  # The full MongoDB connection string.
+  # Alternatively you can specify MONGODB_* environment variables.
+  # (see https://docs.growthbook.io/self-host/env#production-settings)
+  mongodbUri: mongodb://growthbook-mongodb:27017
+
+  # Auth signing key (use a long random string). If empty, generate a random secret.
+  jwtSecret: ""
+
+  # Data source credential encryption key (use a long random string)
+  # If you change the ecryption key, you will need to migrate any existing data 
+  # sources using the following command:
+  #
+  #   $ yarn migrate-encryption-key $OLD_KEY
+  #
+  # If you didn't have an ecryption key before, leave $OLD_KEY blank
+  encryptionKey: ""
+
+  # Configuration map (config.yaml) for 'datasources', 'metrics', 'dimensions', and 'segments'.
+  # See documentation at https://docs.growthbook.io/self-host/config.
+  config: {}
+
+# Extra ConfigMaps managed by the chart
+# (You can use them with extraEnv or extraEnvFrom or some of the extraVolumes values).
+# The format is "key/value" where
+#    * key (can be templated) is the name of the configmap that will be created
+#    * value: an object with the standard 'data' key.
+#          The value associated with this keys must be a string (can be templated)
+extraConfigMaps: {}
+#   '{{ .Release.Name }}-extra-settings':
+#     data: |
+#       EXPERIMENT_REFRESH_FREQUENCY: "6"
+#       QUERY_CACHE_TTL_MINS: "60"
+
+# Extra secrets managed by the chart
+# (You can use them with extraEnv or extraEnvFrom or some of the extraVolumes values).
+# The format is "key/value" where
+#    * key (can be templated) is the name of the secret that will be created
+#    * value: an object with the standard 'data' or 'stringData' key (or both).
+#          The value associated with those keys must be a string (can be templated)
+extraSecret: {}
+#   '{{ .Release.Name }}-enterprise':
+#     stringData: |
+#       LICENSE_KEY: 'license_key'
+#       SSO_CONFIG: 'sso_json_enconded_string'
+#   '{{ .Release.Name }}-google-oauth':
+#     data: |
+#       GOOGLE_OAUTH_CLIENT_ID: 'b64_encoded_client_id'
+#       GOOGLE_OAUTH_CLIENT_SECRET: 'b64_encoded_client_secret'
+
+# Extra 'env' items added to the definition of containers
+extraEnv: []
+#   - name: EXPERIMENT_REFRESH_FREQUENCY
+#     value: 6
+#   - name: QUERY_CACHE_TTL_MINS
+#     value: 60
+
+# Extra 'envFrom' items added to the definition of containers
+extraEnvFrom:
+#   - secretRef:
+#       name: '{{ .Release.Name }}-email-smtp'
+#   - configMapRef:
+#       name: '{{ .Release.Name }}-extra-settings'
+
+service:
+  type: ClusterIP
+  frontend:
+    port: 80
+    targetPort: 3000
+  backend:
+    port: 8080
+    targetPort: 3100
+
+ingress:
+  enabled: false
+  className: ""
+  annotations: {}
+    # kubernetes.io/ingress.class: nginx
+    # kubernetes.io/tls-acme: "true"
+  # In order for authentication cookies to work correctly, both the app and api
+  # domains must be considered the "same site".
+  # They can be on different subdomains or ports, but the root domain must be the same.
+  #     Works: gb.example.com and gb-api.example.com
+  #     Breaks: gb.frontend.com and gb.backend.com
+  frontend:
+    host: gb.example.com
+    path: /
+    pathType: ImplementationSpecific
+    tls:
+      enabled: false
+      secretName: ""
+  backend:
+    host: gb-api.example.com
+    path: /
+    pathType: ImplementationSpecific
+    tls:
+      enabled: false
+      secretName: ""
+
+resources:
+  # We usually recommend not to specify default resources and to leave this as 
+  # a conscious choice for the user. This also increases chances charts run on 
+  # environments with little resources, such as Minikube.
+  frontend: {}
+    # limits:
+    #   cpu: 100m
+    #   memory: 128Mi
+    # requests:
+    #   cpu: 100m
+    #   memory: 128Mi
+  backend: {}
+    # limits:
+    #   cpu: 100m
+    #   memory: 128Mi
+    # requests:
+    #   cpu: 100m
+    #   memory: 128Mi
+  
+autoscaling:
+  enabled: false
+  minReplicas: 1
+  maxReplicas: 100
+  targetCPUUtilizationPercentage: 80
+  # targetMemoryUtilizationPercentage: 80
+
+nodeSelector: {}
+
+tolerations: []
+
+affinity: {}
+
+# Configuration for mongodb subchart
+# Not recommended for production
+mongodb:
+  enabled: true
+  # auth:
+  #   rootUser: root
+  #   rootPassword: ""

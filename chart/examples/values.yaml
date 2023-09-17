@@ -1,0 +1,31 @@
+service:
+  type: ClusterIP
+
+growthbookSettings:
+  nodeEnv: production
+  encryptionKey: kasdjflaksdjf;asdkfjlsakdfjsa;dlfj
+
+ingress:
+  enabled: true
+  className: nginx
+  annotations:
+    # kubernetes.io/tls-acme: "true"
+    nginx.ingress.kubernetes.io/enable-cors: "true"
+    nginx.ingress.kubernetes.io/cors-allow-origin: "https://gb.example.com"
+    nginx.ingress.kubernetes.io/cors-allow-headers: "Authorization,Content-Type,Referer,sec-ch-ua,sec-ch-ua-mobile,sec-ch-ua-platform,User-Agent,X-Organization"
+    # nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
+  frontend: &tls
+    tls:
+      enabled: true
+      secretName: frontend-tls-secret
+  backend:
+    tls:
+      enabled: true
+      secretName: backend-tls-secret
+
+mongodb:
+  enabled: true
+  auth:
+    enabled: false
+  service:
+    type: ClusterIP #NodePort

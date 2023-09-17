@@ -1,0 +1,93 @@
+{{- $fullName := include "growthbook.fullname" . -}}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ $fullName }}
+  labels:
+    {{- include "growthbook.labels" . | nindent 4 }}
+spec:
+  {{- if not .Values.autoscaling.enabled }}
+  replicas: {{ .Values.replicaCount }}
+  {{- end }}
+  selector:
+    matchLabels:
+      {{- include "growthbook.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      {{- with .Values.podAnnotations }}
+      annotations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      labels:
+        {{- include "growthbook.selectorLabels" . | nindent 8 }}
+    spec:
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      serviceAccountName: {{ include "growthbook.serviceAccountName" . }}
+      securityContext:
+        {{- toYaml .Values.podSecurityContext | nindent 8 }}
+      containers:
+        - name: frontend
+          securityContext:
+            {{- toYaml .Values.securityContext | nindent 12 }}
+          image: "{{ include "growthbook.image" . }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          args: [yarn, workspace, front-end, start]
+          ports:
+            - name: http-frontend
+              containerPort: {{ .Values.service.frontend.targetPort }}
+              protocol: TCP
+          env:
+            {{- include "growthbook.env" . | nindent 12 }}
+          envFrom:
+            - secretRef:
+                name: {{ $fullName }}
+          livenessProbe:
+            httpGet:
+              path: /
+              port: http-frontend
+          readinessProbe:
+            httpGet:
+              path: /
+              port: http-frontend
+          resources:
+            {{- toYaml .Values.resources.frontend | nindent 12 }}
+        - name: backend
+          securityContext:
+            {{- toYaml .Values.securityContext | nindent 12 }}
+          image: "{{ include "growthbook.image" . }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          args: [yarn, workspace, back-end, start]
+          ports:
+            - name: http-backend
+              containerPort: {{ .Values.service.backend.targetPort }}
+              protocol: TCP
+          env:
+            {{- include "growthbook.env" . | nindent 12}}
+          envFrom:
+            - secretRef:
+                name: {{ $fullName }}
+          livenessProbe:
+            httpGet:
+              path: /
+              port: http-backend
+          readinessProbe:
+            httpGet:
+              path: /
+              port: http-backend
+          resources:
+            {{- toYaml .Values.resources.backend | nindent 12 }}
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
